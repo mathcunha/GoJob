@@ -26,17 +26,17 @@ func init() {
 	configFile = os.Getenv("CONFIG")
 	if configFile == "" {
 
-		configFile = "config.json"
+		configFile = "mongodb/master.json"
 	}
 }
 
 func main() {
-	var server gojob.Worker
+	var server gojob.Node
 	switch profile {
 	case "slave":
 		server = &gojob.Slave{Addr: addr, MasterAddr: masterAddr}
 	case "master":
-		server = &gojob.Master{Name: "master", Addr: masterAddr}
+		server = gojob.NewMaster(masterAddr, configFile)
 	}
-	server.Work()
+	server.Start()
 }

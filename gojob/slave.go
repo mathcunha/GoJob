@@ -6,40 +6,48 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 )
 
 type Slave struct {
+	//Master Node address
 	MasterAddr string
-	Addr       string
-	Name       string
+	//Slave Node address
+	Addr string
+	//Name given by Master
+	Name      string
+	Benchmark Benchmark
 }
 
-func (s *Slave) Work() {
+func (s *Slave) Start() {
 	s.announce()
-	http.HandleFunc("/api/v1/", func(w http.ResponseWriter, r *http.Request) {
-		a_path := strings.Split(r.URL.Path, "/")
-		if "slave" != a_path[3] {
-			http.Error(w, "no handler to path "+r.URL.Path, http.StatusNotFound)
-			return
+	http.HandleFunc("/benchmark", func(w http.ResponseWriter, r *http.Request) {
+		if "POST" == r.Method {
+			start := r.URL.Query().Get("start")
+			if "true" == start {
+				log.Printf("%v starting benchmark", s.Name)
+			}
+		} else if "GET" == r.Method {
+		} else {
+			http.Error(w, r.Method, http.StatusMethodNotAllowed)
 		}
+		return
 	})
 	http.ListenAndServe(s.Addr, nil)
 }
 
-//announce itself to master
+//Registering Slave Node
 func (s *Slave) announce() {
-	fmt.Printf("hello! I've just arrived master %v\n", s.MasterAddr)
+	log.Printf("hello! I've just arrived master %v\n", s.MasterAddr)
 	var postData []byte
 
 	w := bytes.NewBuffer(postData)
 	json.NewEncoder(w).Encode(s)
-	url := fmt.Sprintf("http://%v/api/v1/slave", s.MasterAddr)
+	url := fmt.Sprintf("http://%v/slave", s.MasterAddr)
 
 	resp, err := http.Post(url, "application/json", w)
 	for err != nil {
-		fmt.Printf("waiting master at %v\n", s.Addr)
+		log.Printf("waiting master at %v\n", s.Addr)
 		time.Sleep(1 * time.Minute)
 		resp, err = http.Post(url, "application/json", w)
 	}
@@ -50,6 +58,8 @@ func (s *Slave) announce() {
 		log.Fatal("ERROR: Master response:", err)
 
 	}
-
-	fmt.Printf("my name is %v\n", s.Name)
+	if s.Name == "" {
+		log.Fatal("Slave not added to TestScenario which seems full")
+	}
+	log.Printf("my name is %v\n", s.Name)
 }
