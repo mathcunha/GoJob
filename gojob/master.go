@@ -3,28 +3,31 @@ package gojob
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"strings"
 )
 
 type Master struct {
 	Name    string
-	Members []Member
+	Members []Slave
+	Addr    string
 }
 
-//show all announced members
-func members() {
+type Worker interface {
+	Work()
 }
 
 func (m *Master) addSlave(s *Slave) {
 	//TODO need a mutex
-	s.Name = fmt.Sprintf("slave_%d", len(Members))
-	m.Members = append(m.Members, s)
+	s.Name = fmt.Sprintf("slave_%d", len(m.Members))
+	m.Members = append(m.Members, *s)
 
 }
 
-func (m *Master) StartServer() {
+func (m *Master) Work() {
 	http.HandleFunc("/api/v1/", m.masterRestHandlerV1)
-	http.ListenAndServe(getPort(), nil)
+	http.ListenAndServe(m.Addr, nil)
 }
 
 func (m *Master) masterRestHandlerV1(w http.ResponseWriter, r *http.Request) {
@@ -36,24 +39,28 @@ func (m *Master) masterRestHandlerV1(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Printf("ERROR: Parsing request body masterRestHandlerV1:%v", err)
 				http.Error(w, "ERROR: Parsing request body masterRestHandlerV1 "+r.URL.Path, http.StatusInternalServerError)
+				return
 			}
-			m.addSlave(slave)
-			err = json.NewEncoder(w.Body).Encode(slave)
+			m.addSlave(&slave)
+			err = json.NewEncoder(w).Encode(slave)
 			if err != nil {
 				log.Printf("ERROR: Encoding slave masterRestHandlerV1:%v", err)
 				http.Error(w, "ERROR: Encoding slave masterRestHandlerV1 "+r.URL.Path, http.StatusInternalServerError)
+				return
 
 			}
 			w.Header().Set("Content-Type", "application/json")
+			return
 		}
 		if "GET" == r.Method {
-			err = json.NewEncoder(w.Body).Encode(m.Members)
+			err := json.NewEncoder(w).Encode(m.Members)
 			if err != nil {
 				log.Printf("ERROR: Encoding slaveS masterRestHandlerV1:%v", err)
 				http.Error(w, "ERROR: Encoding slaveS masterRestHandlerV1 "+r.URL.Path, http.StatusInternalServerError)
-
+				return
 			}
 			w.Header().Set("Content-Type", "application/json")
+			return
 		}
 
 	}
