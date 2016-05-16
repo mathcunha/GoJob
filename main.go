@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/mathcunha/GoJob/gojob"
+	"io/ioutil"
+	"log"
 	"os"
 )
 
@@ -30,13 +34,27 @@ func init() {
 	}
 }
 
+func loadBenchmark(cfgPath string) (benchmark gojob.Benchmark) {
+	file, err := os.Open(cfgPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	b, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	json.NewDecoder(bytes.NewBuffer(b)).Decode(&benchmark)
+	return
+}
+
 func main() {
 	var server gojob.Node
 	switch profile {
 	case "slave":
 		server = &gojob.Slave{Addr: addr, MasterAddr: masterAddr}
 	case "master":
-		server = gojob.NewMaster(masterAddr, configFile)
+		server = gojob.NewMaster(masterAddr, loadBenchmark(configFile))
 	}
 	server.Start()
 }

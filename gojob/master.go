@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 )
@@ -39,18 +37,7 @@ type Node interface {
 }
 
 //The right way to create a new master
-func NewMaster(addr string, cfgPath string) *Master {
-	file, err := os.Open(cfgPath) // For read access.
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	b, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var benchmark Benchmark
-	err = json.NewDecoder(bytes.NewBuffer(b)).Decode(&benchmark)
+func NewMaster(addr string, benchmark Benchmark) *Master {
 	return &Master{Name: "master", Addr: addr, mutex: &sync.Mutex{}, Benchmark: benchmark}
 }
 
