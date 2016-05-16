@@ -1,0 +1,6 @@
+{
+	"nodes":2,
+	"users":100,
+	"ops":20,
+	"job":"mongo"
+}
