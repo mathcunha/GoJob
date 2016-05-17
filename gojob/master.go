@@ -80,7 +80,7 @@ func (m *Master) Start() {
 	http.ListenAndServe(m.Addr, nil)
 }
 
-func (m *Master) NotifySlaves() {
+func (m *Master) notifySlaves() {
 	var wg sync.WaitGroup
 	wg.Add(len(m.Members))
 	var postData []byte
@@ -94,6 +94,30 @@ func (m *Master) NotifySlaves() {
 				log.Printf("error starting slave %v at %v\n", s.Name, s.Addr)
 			} else {
 				defer resp.Body.Close()
+			}
+			wg.Done()
+		}(slave)
+	}
+	wg.Wait()
+}
+
+func (m *Master) waitUntilFinish() {
+	var wg sync.WaitGroup
+	wg.Add(len(m.Members))
+	for _, slave := range m.Members {
+		go func(s Slave) {
+			url := fmt.Sprintf("http://%v/benchmark", s.Addr)
+
+			resp, err := http.Get(url)
+			if err != nil {
+				log.Printf("error starting slave %v at %v\n", s.Name, s.Addr)
+			} else {
+				defer resp.Body.Close()
+				var result Result
+				err = json.NewDecoder(resp.Body).Decode(&result)
+				for _, w := range result.Workers {
+					fmt.Println(w)
+				}
 			}
 			wg.Done()
 		}(slave)
@@ -123,7 +147,9 @@ func (m *Master) slaveHandlerV1(w http.ResponseWriter, r *http.Request) {
 				//send response to slave and wait 10 seconds before notifyAll
 				go func() {
 					time.Sleep(10 * time.Second)
-					m.NotifySlaves()
+					m.notifySlaves()
+					time.Sleep(10 * time.Second)
+					m.waitUntilFinish()
 				}()
 			}
 			m.mutex.Unlock()

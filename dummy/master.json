@@ -1,6 +1,6 @@
 {
 	"nodes":1,
 	"users":4,
-	"ops":1,
+	"ops":8,
 	"workload":"dummy"
 }

@@ -1,7 +1,6 @@
 package gojob
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -20,7 +19,6 @@ type Task interface {
 func (w *Worker) Work() {
 	w.Executed = 0
 	w.Begin = time.Now().Nanosecond()
-	fmt.Println(w)
 	for ; w.Executed < w.Ops; w.Executed++ {
 		if err := w.task.Run(); err != nil {
 			w.ErrorOp++

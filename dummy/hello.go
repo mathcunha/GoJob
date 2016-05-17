@@ -2,7 +2,7 @@ package dummy
 
 import (
 	"fmt"
-	"github.com/mathcunha/GoJob/gojob"
+	"github.com/mathcunha/wreckit/gojob"
 	"time"
 )
 

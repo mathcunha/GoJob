@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/mathcunha/GoJob/dummy"
-	"github.com/mathcunha/GoJob/gojob"
+	"github.com/mathcunha/wreckit/dummy"
+	"github.com/mathcunha/wreckit/gojob"
 	"os"
 )
 

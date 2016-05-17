@@ -21,6 +21,12 @@ type Slave struct {
 	Task      Task
 }
 
+type Result struct {
+	Workers  []*Worker
+	Name     string
+	Finished bool
+}
+
 func NewSlave(addr, masterAddr string) *Slave {
 	slave := Slave{Addr: addr, MasterAddr: masterAddr}
 	slave.announce()
@@ -48,10 +54,11 @@ func (s *Slave) Start() {
 				fmt.Fprintf(w, fmt.Sprintf("{\"success\":\"%d workers where started\"}", len(s.workers)))
 			}
 		} else if "GET" == r.Method {
-			result := struct {
-				Workers []*Worker
-				Name    string
-			}{s.workers, s.Name}
+			finished := true
+			for i := 0; finished && i < len(s.workers); i++ {
+				finished = finished && s.workers[i].IsWorking()
+			}
+			result := Result{s.workers, s.Name, finished}
 			w.Header().Set("Content-Type", "application/json")
 			err := json.NewEncoder(w).Encode(result)
 			if err != nil {
