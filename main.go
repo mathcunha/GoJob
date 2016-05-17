@@ -1,11 +1,8 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
+	"github.com/mathcunha/GoJob/dummy"
 	"github.com/mathcunha/GoJob/gojob"
-	"io/ioutil"
-	"log"
 	"os"
 )
 
@@ -30,31 +27,27 @@ func init() {
 	configFile = os.Getenv("CONFIG")
 	if configFile == "" {
 
-		configFile = "mongodb/master.json"
+		configFile = "dummy/master.json"
 	}
 }
 
-func loadBenchmark(cfgPath string) (benchmark gojob.Benchmark) {
-	file, err := os.Open(cfgPath)
-	if err != nil {
-		log.Fatal(err)
+func loadTask(task string) gojob.Task {
+	switch task {
+	case "dummy":
+		return &dummy.Dummy{}
 	}
-	defer file.Close()
-	b, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.Fatal(err)
-	}
-	json.NewDecoder(bytes.NewBuffer(b)).Decode(&benchmark)
-	return
+	return nil
 }
 
 func main() {
 	var server gojob.Node
 	switch profile {
 	case "slave":
-		server = &gojob.Slave{Addr: addr, MasterAddr: masterAddr}
+		slave := gojob.NewSlave(addr, masterAddr)
+		slave.Task = loadTask(slave.Benchmark.Workload)
+		server = slave
 	case "master":
-		server = gojob.NewMaster(masterAddr, loadBenchmark(configFile))
+		server = gojob.NewMaster(masterAddr, configFile)
 	}
 	server.Start()
 }

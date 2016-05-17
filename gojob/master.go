@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 )
@@ -21,6 +23,20 @@ type Master struct {
 	Benchmark Benchmark
 }
 
+func loadBenchmark(cfgPath string) (benchmark Benchmark) {
+	file, err := os.Open(cfgPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	b, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	json.NewDecoder(bytes.NewBuffer(b)).Decode(&benchmark)
+	return
+}
+
 type Benchmark struct {
 	//Number of nodes running the TestCase
 	Nodes int
@@ -30,6 +46,8 @@ type Benchmark struct {
 	Ops int
 	//TODO work in progress
 	Workload string
+	//Some variables needed by Tasks
+	Properties map[string]string
 }
 
 type Node interface {
@@ -37,8 +55,8 @@ type Node interface {
 }
 
 //The right way to create a new master
-func NewMaster(addr string, benchmark Benchmark) *Master {
-	return &Master{Name: "master", Addr: addr, mutex: &sync.Mutex{}, Benchmark: benchmark}
+func NewMaster(addr string, cfgFile string) *Master {
+	return &Master{Name: "master", Addr: addr, mutex: &sync.Mutex{}, Benchmark: loadBenchmark(cfgFile)}
 }
 
 func (m *Master) addSlave(s *Slave) (added bool) {
