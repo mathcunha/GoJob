@@ -10,15 +10,11 @@ type Dummy struct {
 	num int
 }
 
-func (d *Dummy) LoadProperties(prop map[string]string) {
-	fmt.Printf("loading properties %p\n", d)
-}
-
 func (d *Dummy) Run() error {
 	fmt.Printf("hello %v\n", d.num)
 	return nil
 }
 
-func (d *Dummy) Clone() gojob.Task {
+func (d *Dummy) NewTask(prop map[string]string) gojob.Task {
 	return &Dummy{num: time.Now().Nanosecond()}
 }

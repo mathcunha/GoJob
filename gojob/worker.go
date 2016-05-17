@@ -12,8 +12,7 @@ type Worker struct {
 
 type Task interface {
 	Run() error
-	LoadProperties(map[string]string)
-	Clone() Task
+	NewTask(map[string]string) Task
 }
 
 func (w *Worker) Work() {

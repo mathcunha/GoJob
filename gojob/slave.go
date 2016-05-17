@@ -39,9 +39,8 @@ func (s *Slave) Start() {
 			start := r.URL.Query().Get("start")
 			if "true" == start {
 				log.Printf("%v is starting benchmark for task %T\n", s.Name, s.Task)
-				s.Task.LoadProperties(s.Benchmark.Properties)
 				for i := 0; i < s.Benchmark.Users; i++ {
-					worker := &Worker{Ops: s.Benchmark.Ops, task: s.Task.Clone()}
+					worker := &Worker{Ops: s.Benchmark.Ops, task: s.Task.NewTask(s.Benchmark.Properties)}
 					s.workers = append(s.workers, worker)
 				}
 				log.Printf("%d workers loaded\n", len(s.workers))
