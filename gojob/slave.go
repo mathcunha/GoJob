@@ -38,7 +38,7 @@ func (s *Slave) Start() {
 					worker := &Worker{Ops: s.Benchmark.Ops, task: s.Task.Clone()}
 					s.workers = append(s.workers, worker)
 				}
-				log.Printf("%d workers loaded\n%v\n", len(s.workers), s.workers)
+				log.Printf("%d workers loaded\n", len(s.workers))
 				for _, worker := range s.workers {
 					go func(w *Worker) {
 						w.Work()
